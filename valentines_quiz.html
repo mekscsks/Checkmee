@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hey You… Let's Play 💌</title>
+
+  <!-- Google Fonts: Playfair Display for headings, DM Sans for body -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES & RESET
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink-light:   #fce4ec;
+      --pink-mid:     #f48fb1;
+      --pink-deep:    #e91e8c;
+      --peach:        #ffccbc;
+      --cream:        #fff8f0;
+      --red-soft:     #ef5350;
+      --gold:         #f9c74f;
+      --gold-light:   #fff3cd;
+      --text-dark:    #3d1a24;
+      --text-mid:     #7b3f5e;
+      --text-light:   #c2788a;
+      --white:        #ffffff;
+      --shadow:       0 8px 40px rgba(233, 30, 140, 0.15);
+      --radius:       20px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text-dark);
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* ============================================================
+       FLOATING HEARTS CANVAS BACKGROUND
+    ============================================================ */
+    #heartsCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+       HERO SECTION
+    ============================================================ */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px;
+      background: linear-gradient(160deg, #fce4ec 0%, #ffccbc 50%, #fff0f5 100%);
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    /* Sparkle dots in hero */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(249,199,79,0.35) 1px, transparent 1px),
+        radial-gradient(circle, rgba(244,143,177,0.25) 1px, transparent 1px);
+      background-size: 60px 60px, 37px 37px;
+      background-position: 0 0, 18px 18px;
+      pointer-events: none;
+    }
+
+    /* Soft blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .blob-1 { width: 380px; height: 380px; background: #f48fb1; top: -80px; left: -80px; }
+    .blob-2 { width: 300px; height: 300px; background: #ffb3c6; bottom: -60px; right: -60px; }
+    .blob-3 { width: 200px; height: 200px; background: #f9c74f; top: 40%; left: 10%; opacity: 0.3; }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 680px;
+    }
+
+    .hero-icon {
+      font-size: 4rem;
+      display: block;
+      animation: float 3s ease-in-out infinite;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+      animation: fadeUp 0.9s ease both;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--pink-deep);
+    }
+
+    .hero-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--text-mid);
+      font-weight: 300;
+      margin-bottom: 40px;
+      animation: fadeUp 1.1s ease both;
+      line-height: 1.7;
+    }
+
+    /* Proceed button */
+    .btn-proceed {
+      display: inline-block;
+      padding: 16px 44px;
+      background: linear-gradient(135deg, #e91e8c, #f06292);
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 6px 30px rgba(233, 30, 140, 0.4);
+      animation: fadeUp 1.3s ease both, pulse 2.5s ease-in-out 1.5s infinite;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-proceed:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 12px 40px rgba(233, 30, 140, 0.55);
+    }
+
+    .btn-proceed:active { transform: scale(0.97); }
+
+    /* ============================================================
+       QUIZ SECTION
+    ============================================================ */
+    #quiz {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 80px 24px 100px;
+      background: linear-gradient(180deg, #fff0f5 0%, var(--cream) 100%);
+    }
+
+    .quiz-wrapper {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .quiz-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .quiz-header h2 {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      color: var(--pink-deep);
+      margin-bottom: 8px;
+    }
+
+    .quiz-header p {
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+
+    /* Progress bar */
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #f8d7e3;
+      border-radius: 99px;
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e91e8c, #f9c74f);
+      border-radius: 99px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+      width: 0%;
+    }
+
+    /* Question card */
+    .question-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(244,143,177,0.2);
+      animation: fadeUp 0.5s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative corner accent */
+    .question-card::before {
+      content: '💗';
+      position: absolute;
+      top: -4px; right: 16px;
+      font-size: 2.5rem;
+      opacity: 0.12;
+      transform: rotate(15deg);
+    }
+
+    .q-number {
+      font-family: 'Dancing Script', cursive;
+      font-size: 0.95rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .q-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      color: var(--text-dark);
+      margin-bottom: 28px;
+      line-height: 1.45;
+    }
+
+    /* Answer options grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .option-btn {
+      background: var(--cream);
+      border: 2px solid #f8d7e3;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text-mid);
+      text-align: left;
+      transition: all 0.22s ease;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-btn .opt-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+    .option-btn:hover {
+      border-color: var(--pink-mid);
+      background: #fff0f5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(233,30,140,0.12);
+    }
+
+    .option-btn.selected {
+      border-color: var(--pink-deep);
+      background: linear-gradient(135deg, #fce4ec, #fff0f5);
+      color: var(--text-dark);
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(233,30,140,0.2);
+    }
+
+    .option-btn.disabled {
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    /* Remark bubble */
+    .remark-bubble {
+      margin-top: 20px;
+      background: linear-gradient(135deg, #fce4ec, #fff3cd);
+      border-left: 4px solid var(--pink-deep);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.15rem;
+      color: var(--text-mid);
+      animation: fadeUp 0.4s ease both;
+      display: none;
+    }
+
+    .remark-bubble.visible { display: block; }
+
+    /* Next button */
+    .btn-next {
+      margin-top: 24px;
+      display: none;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #e91e8c, #f06292);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(233,30,140,0.3);
+      transition: all 0.2s ease;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .btn-next:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(233,30,140,0.45);
+    }
+
+    .btn-next.visible { display: block; }
+
+    /* ============================================================
+       SUMMARY MODAL
+    ============================================================ */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 26, 36, 0.55);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    #overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 44px 36px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 24px 80px rgba(233,30,140,0.3);
+      position: relative;
+      animation: scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* Ribbon decoration */
+    .modal-ribbon {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #e91e8c, #f9c74f, #e91e8c);
+      border-radius: 28px 28px 0 0;
+    }
+
+    .modal-icon {
+      font-size: 3.5rem;
+      display: block;
+      text-align: center;
+      margin-bottom: 12px;
+      animation: float 2.5s ease-in-out infinite;
+    }
+
+    .modal h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.7rem;
+      color: var(--pink-deep);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .modal-subtitle {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+
+    /* Summary list */
+    .summary-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--cream);
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid #f8d7e3;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .summary-item-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+
+    .summary-item-body { flex: 1; }
+
+    .summary-q {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-a {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      color: var(--text-dark);
+      font-size: 0.98rem;
+    }
+
+    /* Buttons row in modal */
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-share {
+      padding: 13px 32px;
+      background: linear-gradient(135deg, #e91e8c, #f06292);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(233,30,140,0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-share:hover { transform: translateY(-2px); }
+
+    .btn-reset {
+      padding: 13px 32px;
+      background: var(--cream);
+      color: var(--text-mid);
+      border: 2px solid #f8d7e3;
+      border-radius: 50px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset:hover {
+      border-color: var(--pink-mid);
+      background: #fff0f5;
+    }
+
+    /* ============================================================
+       ANIMATIONS
+    ============================================================ */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 6px 30px rgba(233,30,140,0.4); }
+      50%       { box-shadow: 0 6px 50px rgba(233,30,140,0.7); }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 500px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .modal { padding: 36px 22px; }
+      .question-card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating hearts canvas (drawn by JS) -->
+<canvas id="heartsCanvas"></canvas>
+
+<!-- ============================================================
+     HERO SECTION
+============================================================ -->
+<section id="hero">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="hero-content">
+    <span class="hero-icon">💌</span>
+    <h1 class="hero-title">
+      Hey there… want to play a little <em>game</em> of getting to know each other?
+    </h1>
+    <p class="hero-sub">
+      Answer a few fun questions and let's see how well we click 💌<br>
+      No wrong answers — only adorable ones.
+    </p>
+    <!-- Clicking scrolls smoothly to the quiz section -->
+    <a href="#quiz" class="btn-proceed">Proceed 💖</a>
+  </div>
+</section>
+
+<!-- ============================================================
+     QUIZ SECTION
+============================================================ -->
+<section id="quiz">
+  <div class="quiz-wrapper">
+    <div class="quiz-header">
+      <h2>Let's get to know you ✨</h2>
+      <p>Pick what feels most like you — follow your heart!</p>
+    </div>
+
+    <!-- Progress bar showing how far along the quiz they are -->
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <!-- The question card is dynamically rendered here -->
+    <div id="questionContainer"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SUMMARY MODAL OVERLAY
+============================================================ -->
+<div id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-ribbon"></div>
+    <span class="modal-icon">🌸</span>
+    <h3 id="modalTitle">So, here's you…</h3>
+    <p class="modal-subtitle">A little peek into your lovely world 💕</p>
+
+    <!-- Summary list is populated by JS -->
+    <ul class="summary-list" id="summaryList"></ul>
+
+    <div class="modal-actions">
+      <!-- Reset button starts the quiz over -->
+      <button class="btn-reset" onclick="resetQuiz()">🔄 Start Over</button>
+      <button class="btn-share" onclick="closeModal()">Close 💖</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ============================================================
+     QUIZ DATA
+     Each question has:
+       - id: unique key
+       - emoji: decorative icon shown on the card
+       - question: the question text
+       - options: array of { icon, text, remark } objects
+  ============================================================ */
+  const questions = [
+    {
+      id: "weekend",
+      emoji: "🌿",
+      question: "What's your perfect weekend vibe?",
+      options: [
+        { icon: "🏡", text: "Cozy indoors, blanket & a good show",  remark: "Aww, cozy vibes! I'd love to binge-watch with you 💖" },
+        { icon: "🌄", text: "Out in nature — fresh air & adventure", remark: "A wild heart! I love that energy 🌿✨" },
+        { icon: "🎉", text: "Laughing with friends over good food",  remark: "You're the life of every party, aren't you? 🥳💃" },
+        { icon: "📚", text: "Quiet café, book, and good music",      remark: "Soft hours and good words — dreamy! 📖☕" },
+      ]
+    },
+    {
+      id: "indulgence",
+      emoji: "☕",
+      question: "Coffee or chocolate — hard choice, but pick one!",
+      options: [
+        { icon: "☕", text: "Coffee — always coffee",               remark: "A whole vibe. You run on caffeine and good vibes 💛" },
+        { icon: "🍫", text: "Chocolate, no contest",               remark: "Sweet tooth and a sweeter heart 🍫💕" },
+        { icon: "☕🍫", text: "Both — mocha for the win!",          remark: "A maximalist! You refuse to choose and honestly, same 😂💖" },
+        { icon: "🍵", text: "Neither — I'm a tea person",           remark: "Calm, collected, and secretly a poet 🍵✨" },
+      ]
+    },
+    {
+      id: "season",
+      emoji: "🍂",
+      question: "Which season feels most like your soul?",
+      options: [
+        { icon: "🌸", text: "Spring — blooming & hopeful",         remark: "Everything new and beautiful — just like you 🌸" },
+        { icon: "☀️", text: "Summer — warm, bright & alive",       remark: "Golden energy! You're basically sunshine in human form ☀️" },
+        { icon: "🍂", text: "Autumn — cozy, golden & a little moody", remark: "Soft sweaters and falling leaves… poetic 🍂💛" },
+        { icon: "❄️", text: "Winter — still, magical & starry",    remark: "Quiet magic and twinkle lights — a winter dreamer ❄️🌟" },
+      ]
+    },
+    {
+      id: "color",
+      emoji: "🎨",
+      question: "Which color makes your heart skip a beat?",
+      options: [
+        { icon: "🌹", text: "Deep red — passionate & bold",        remark: "Bold, fierce, and deeply feeling. Red through and through 🌹" },
+        { icon: "🩷", text: "Soft pink — tender & sweet",          remark: "Gentle as sunrise and twice as lovely 🩷" },
+        { icon: "💛", text: "Warm gold — radiant & dreamy",        remark: "You glow from the inside out — pure gold ✨" },
+        { icon: "🤍", text: "Soft white — pure & serene",          remark: "Peaceful, beautiful, and effortlessly graceful 🤍" },
+      ]
+    },
+    {
+      id: "love_language",
+      emoji: "💌",
+      question: "What's your love language?",
+      options: [
+        { icon: "💬", text: "Words of affirmation — say it out loud", remark: "You believe in the magic of words, and that's beautiful 💬💕" },
+        { icon: "🤗", text: "Physical touch — hugs & closeness",   remark: "Warmth and closeness — the best way to feel loved 🤗" },
+        { icon: "🎁", text: "Acts of service — actions speak louder", remark: "You show love by showing up — incredible 🎁❤️" },
+        { icon: "⏳", text: "Quality time — just be present with me", remark: "Time is your love currency and I'd spend every second 💗⏳" },
+      ]
+    }
+  ];
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  let currentIndex = 0;
+  let answers = {};   // { questionId: { text, icon, remark } }
+
+  /* ============================================================
+     FLOATING HEARTS CANVAS ANIMATION
+  ============================================================ */
+  (function initHearts() {
+    const canvas = document.getElementById('heartsCanvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, hearts;
+
+    // Heart shapes at different sizes and speeds
+    function Heart() {
+      this.reset();
+    }
+
+    Heart.prototype.reset = function() {
+      this.x     = Math.random() * W;
+      this.y     = H + 30;
+      this.size  = 10 + Math.random() * 20;
+      this.speed = 0.4 + Math.random() * 0.8;
+      this.alpha = 0.2 + Math.random() * 0.5;
+      this.drift = (Math.random() - 0.5) * 0.6;
+      this.color = ['#f48fb1','#f9c74f','#ef5350','#fce4ec','#e91e8c'][Math.floor(Math.random()*5)];
+      this.spin  = (Math.random() - 0.5) * 0.04;
+      this.angle = 0;
+    };
+
+    Heart.prototype.draw = function() {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.angle);
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      // Draw heart shape using bezier curves
+      const s = this.size * 0.05;
+      ctx.moveTo(0, -s * 3);
+      ctx.bezierCurveTo( s * 5, -s * 10,  s * 15,  s * 2,   0,     s * 10);
+      ctx.bezierCurveTo(-s * 15, s * 2,  -s * 5, -s * 10,   0,    -s * 3);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function init() {
+      resize();
+      hearts = Array.from({ length: 28 }, () => {
+        const h = new Heart();
+        h.y = Math.random() * H; // start scattered
+        return h;
+      });
+    }
+
+    function tick() {
+      ctx.clearRect(0, 0, W, H);
+      hearts.forEach(h => {
+        h.y     -= h.speed;
+        h.x     += h.drift;
+        h.angle += h.spin;
+        if (h.y < -40) h.reset();
+        h.draw();
+      });
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('resize', resize);
+    init();
+    tick();
+  })();
+
+  /* ============================================================
+     RENDER QUESTION
+     Builds the current question card and injects it into the DOM
+  ============================================================ */
+  function renderQuestion(index) {
+    const q = questions[index];
+    const container = document.getElementById('questionContainer');
+
+    // Update progress bar width
+    const pct = (index / questions.length) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    // Build options HTML
+    const optionsHTML = q.options.map((opt, i) =>
+      `<button class="option-btn" onclick="selectAnswer(${index}, ${i})" data-index="${i}">
+         <span class="opt-icon">${opt.icon}</span>
+         <span>${opt.text}</span>
+       </button>`
+    ).join('');
+
+    container.innerHTML = `
+      <div class="question-card">
+        <span class="q-number">Question ${index + 1} of ${questions.length} ${q.emoji}</span>
+        <p class="q-text">${q.question}</p>
+        <div class="options-grid">
+          ${optionsHTML}
+        </div>
+        <!-- Remark bubble shown after an answer is selected -->
+        <div class="remark-bubble" id="remarkBubble"></div>
+        <!-- Next / Finish button appears after selecting an answer -->
+        <button class="btn-next" id="btnNext" onclick="nextQuestion()">
+          ${index < questions.length - 1 ? 'Next question →' : 'See my results 🌸'}
+        </button>
+      </div>
+    `;
+  }
+
+  /* ============================================================
+     SELECT AN ANSWER
+     Highlights the chosen option, shows a remark, enables next
+  ============================================================ */
+  function selectAnswer(qIndex, optIndex) {
+    const q   = questions[qIndex];
+    const opt = q.options[optIndex];
+
+    // Record the answer
+    answers[q.id] = { text: opt.text, icon: opt.icon, remark: opt.remark, question: q.question };
+
+    // Update button styles
+    document.querySelectorAll('.option-btn').forEach((btn, i) => {
+      btn.classList.toggle('selected', i === optIndex);
+      btn.classList.add('disabled');
+    });
+
+    // Show the playful remark bubble
+    const bubble = document.getElementById('remarkBubble');
+    bubble.textContent = opt.remark;
+    bubble.classList.add('visible');
+
+    // Show the Next / Finish button
+    document.getElementById('btnNext').classList.add('visible');
+  }
+
+  /* ============================================================
+     ADVANCE TO NEXT QUESTION OR SHOW SUMMARY
+  ============================================================ */
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < questions.length) {
+      renderQuestion(currentIndex);
+    } else {
+      // All done — update progress bar to 100% then show modal
+      document.getElementById('progressBar').style.width = '100%';
+      setTimeout(showSummary, 300);
+    }
+  }
+
+  /* ============================================================
+     SHOW SUMMARY MODAL
+     Populates the modal with a list of the user's answers
+  ============================================================ */
+  function showSummary() {
+    const list = document.getElementById('summaryList');
+    list.innerHTML = '';
+
+    questions.forEach((q, i) => {
+      const ans = answers[q.id];
+      if (!ans) return;
+      const li = document.createElement('li');
+      li.className = 'summary-item';
+      li.style.animationDelay = (i * 0.08) + 's';
+      li.innerHTML = `
+        <span class="summary-item-icon">${ans.icon}</span>
+        <div class="summary-item-body">
+          <div class="summary-q">${q.question}</div>
+          <div class="summary-a">${ans.text}</div>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  /* ============================================================
+     CLOSE MODAL
+  ============================================================ */
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  /* ============================================================
+     RESET QUIZ — go back to question 1
+  ============================================================ */
+  function resetQuiz() {
+    closeModal();
+    currentIndex = 0;
+    answers = {};
+    document.getElementById('progressBar').style.width = '0%';
+    renderQuestion(0);
+    // Smoothly scroll back to quiz section
+    document.getElementById('quiz').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Close overlay by clicking outside the modal
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  /* ============================================================
+     INIT — render the first question on page load
+  ============================================================ */
+  renderQuestion(0);
+</script>
+</body>
+</html>
